@@ -10,7 +10,7 @@ export const Home = () => {
   let [emptyDivArray, setemptyDivArray] = useState([]);
   let [balloonList, setBalloonList] = useState([]);
   let [currentValue, setCurrentValue] = useState(false);
-
+  // should be names showValue or something
 
   useEffect(() => {
     setBalloonList(getBalloonColors());
@@ -21,11 +21,10 @@ export const Home = () => {
     let finalColors = getRandomColor(5);
     let tempArr = [];
     for (let i = 0; i < 5; i++) {
-      let index = getRandom(0, finalColors.length - 1);
       let obj = {};
-      obj[finalColors[index]] = i + 1;
+      obj['id'] = i + 1;
+      obj['value'] = finalColors[i]
       tempArr.push(obj);
-      finalColors.splice(index, 1);
     }
     return tempArr;
   };
@@ -43,13 +42,6 @@ export const Home = () => {
     return totalColor;
   };
 
-  const getRandom = (min, max) => {
-    let itr1 = max - min + 1;
-    let itr2 = Math.random() * itr1;
-    let result = Math.floor(itr2) + min;
-    return result;
-  };
-
   const handleShoot = () => {
     enteredValue = Number(txtRef.current.value);
     if (enteredValue > balloonList.length || enteredValue === 0) {
@@ -59,48 +51,36 @@ export const Home = () => {
       return;
     }
 
-    let tempArr = [];
     setTxtColor("green");
     setCurrentValue(false);
 
-    for (let i = 0; i < balloonList.length; i++) {
-      if (enteredValue === i + 1) {
-        setemptyDivArray([...emptyDivArray, ...[balloonList[i]]]);
-      } else {
-        tempArr.push(balloonList[i]);
-      }
-    }
-    setBalloonList(tempArr);
+    //set state using spread operator
+    setemptyDivArray([...emptyDivArray, ...[balloonList[enteredValue - 1]]]);
+    setBalloonList([...balloonList.slice(0, enteredValue - 1), ...balloonList.slice(enteredValue)]);
   };
 
   const handleBalloonClick = (e) => {
-    let outerArray = [];
-    for (let i = 0; i < emptyDivArray.length; i++) {
-      // del balloon onclick
-      let num = Object.values(emptyDivArray[i]);
-      if (num == e.target.id) {
-        let innerArray = [];
-        let count = 0;
-        for (let j = 0; j < balloonList.length; j++) {
-          // push ballon obj in ordr
-          let value = Object.values(balloonList[j]);
-          if (value[0] > num && count === 0) {
-            innerArray.push(emptyDivArray[i]);
-            innerArray.push(balloonList[j]);
-            count++;
-          } else {
-            innerArray.push(balloonList[j]);
-          }
-        }
-        if (innerArray.length !== balloonList.length + 1) {
-          innerArray.push(emptyDivArray[i]);
-        }
-        setBalloonList(innerArray);
-      } else {
-        outerArray.push(emptyDivArray[i]);
-      }
-    }
-    setemptyDivArray(outerArray);
+    const targetID = e.target.id;
+    const targetElement = getArrayElementById(emptyDivArray, targetID);
+
+    // Set empty div array by filtering out the item id clicked
+    setemptyDivArray((current) =>
+      current.filter(
+        (item) =>
+          item.id !== targetElement.id
+      )
+    );
+
+    // crt new ballon list and sort on id 
+    const newBallonList = [...balloonList, targetElement];
+    newBallonList.sort((a, b) => {
+      return a.id - b.id;
+    });
+    setBalloonList(newBallonList);
+  };
+
+  const getArrayElementById = (array, targetID) => {
+    return array.find(({ id }) => id == targetID);
   };
 
   return (
